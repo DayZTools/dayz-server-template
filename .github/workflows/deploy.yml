@@ -1,0 +1,79 @@
+name: Deploy to Nitrado
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy DayZ config to Nitrado server
+    runs-on: ubuntu-latest
+    env:
+      SERVER_NAME: Example Server # Update this to your server name, for example: My Awesome Server
+      NITRADO_FTP_SERVER: ausy010.gamedata.io # Value from the Nitrado Portal for the FTP Server
+      NITRADO_FTP_USERNAME: ni1234567_1 # Value from the Nitrado Portal for the FTP Server
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.9
+        with:
+          versionSpec: "5.5.x"
+
+      - name: Version with GitVersion # https://github.com/marketplace/actions/use-actions
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.9
+
+      - name: Push version tag
+        uses: tvdias/github-tagger@v0.0.2
+        continue-on-error: true
+        if: contains(github.ref, 'main')
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.gitversion.outputs.FullSemVer }}
+
+      - name: 📂 Upload config to Nitrado
+        uses: SamKirkland/FTP-Deploy-Action@4.0.0 # https://github.com/marketplace/actions/ftp-deploy
+        with:
+          server: ${{ env.NITRADO_FTP_SERVER }}
+          username: ${{ env.NITRADO_FTP_USERNAME }}
+          password: ${{ secrets.NITRADO_FTP_PASSWORD }} # Add secret called NITRADO_FTP_PASSWORD in GitHub settings
+          local-dir: ./dayzOffline.chernarusplus/
+          server-dir: /dayzxb_missions/dayzOffline.chernarusplus/
+          exclude: .git*
+            - .git*/**
+          state-name: ../../.sync-state.json
+          log-level: standard
+          # dry-run: true
+
+      - name: 🟢 Discord notification on Success
+        uses: rjstone/discord-webhook-notify@v1 # https://github.com/marketplace/actions/discord-webhook-notify
+        if: success()
+        with:
+          severity: info
+          description: "🎉🎈\n**Deployment to ${{ env.SERVER_NAME }} successful**"
+          details: "**Version:** ${{ steps.gitversion.outputs.FullSemVer }}\n**GitHub User:** ${{ github.actor }}\n**Commit Message:** ${{ github.event.head_commit.message }}"
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }} # Add secret called DISCORD_WEBHOOK in GitHub settings
+
+      - name: 🟡 Discord notification on Cancelled
+        uses: rjstone/discord-webhook-notify@v1
+        if: cancelled()
+        with:
+          severity: warn
+          description: Deployment to ${{ env.SERVER_NAME }} cancelled!
+          details: "**Workflow:** ${{ github.workflow }}"
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: 🔴 Discord notification on Failure
+        uses: rjstone/discord-webhook-notify@v1
+        if: failure()
+        with:
+          severity: error
+          description: Deployment to ${{ env.SERVER_NAME }} failed!
+          details: "**Workflow:** ${{ github.workflow }}"
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
