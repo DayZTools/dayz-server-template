@@ -16,7 +16,7 @@ jobs:
       NITRADO_FTP_USERNAME: ni1234567_1 # Value from the Nitrado Portal for the FTP Server
     steps:
       - name: Check out code
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3.0.2
         with:
           fetch-depth: 0
 
