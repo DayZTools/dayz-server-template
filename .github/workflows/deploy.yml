@@ -23,7 +23,7 @@ jobs:
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.9.13
         with:
-          versionSpec: "5.5.x"
+          versionSpec: "5.x"
 
       - name: Version with GitVersion # https://github.com/marketplace/actions/use-actions
         id: gitversion
@@ -49,7 +49,7 @@ jobs:
             - .git*/**
           state-name: ../../.sync-state.json
           log-level: standard
-          # dry-run: true
+          # dry-run: true # Enable this if you want the process to report only (no files will be copied).
 
       - name: 🟢 Discord notification on Success
         uses: rjstone/discord-webhook-notify@v1 # https://github.com/marketplace/actions/discord-webhook-notify
