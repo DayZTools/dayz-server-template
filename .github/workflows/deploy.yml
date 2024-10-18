@@ -38,7 +38,7 @@ jobs:
           tag: ${{ steps.gitversion.outputs.FullSemVer }}
 
       - name: 📂 Upload config to Nitrado
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4 # https://github.com/marketplace/actions/ftp-deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5 # https://github.com/marketplace/actions/ftp-deploy
         with:
           server: ${{ env.NITRADO_FTP_SERVER }}
           username: ${{ env.NITRADO_FTP_USERNAME }}
